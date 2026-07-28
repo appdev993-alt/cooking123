@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MealMap - Indian Cooking Guide</title>
+    <style>
+        :root {
+            --primary: #d97706;
+            --primary-dark: #b45309;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding-bottom: 3rem;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .add-recipe-btn {
+            position: absolute;
+            right: 2rem;
+            top: 2rem;
+            padding: 0.6rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-recipe-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Controls */
+        .controls {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--card-bg);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--card-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Recipe Grid */
+        .recipe-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .card-body h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .tags {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--primary);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .section-title {
+            color: var(--primary);
+            margin: 1.2rem 0 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.3rem;
+        }
+
+        .ingredients-list label {
+            display: block;
+            padding: 0.3rem 0;
+            cursor: pointer;
+        }
+
+        .steps-list {
+            padding-left: 1.2rem;
+        }
+
+        .steps-list li {
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-muted);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.6rem;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: white;
+        }
+
+        .form-submit-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .timer-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .timer-btn {
+            padding: 0.4rem 0.8rem;
+            background: var(--accent);
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .add-recipe-btn {
+                position: static;
+                margin-top: 1rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🗺️ MealMap</h1>
+        <p>Your Ultimate Visual Guide & Map to Indian Cooking</p>
+        <button class="add-recipe-btn" onclick="openAddModal()">+ Add Custom Recipe</button>
+    </header>
+
+    <div class="controls">
+        <input type="text" id="searchInput" class="search-input"
+            placeholder="Search dishes by name or ingredients..." />
+        <div class="filter-tags">
+            <button class="filter-btn active" onclick="filterRecipes('all')">All</button>
+            <button class="filter-btn" onclick="filterRecipes('Veg')">Vegetarian (30)</button>
+            <button class="filter-btn" onclick="filterRecipes('Non-Veg')">Non-Vegetarian (30)</button>
+            <button class="filter-btn" onclick="filterRecipes('North')">North Indian</button>
+            <button class="filter-btn" onclick="filterRecipes('South')">South Indian</button>
+            <button class="filter-btn" onclick="filterRecipes('East')">East Indian</button>
+            <button class="filter-btn" onclick="filterRecipes('West')">West Indian</button>
+        </div>
+    </div>
+
+    <main class="recipe-grid" id="recipeGrid"></main>
+
+    <!-- Recipe Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('modalOverlay')">&times;</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div class="modal-overlay" id="addModalOverlay">
+        <div class="modal">
+            <button class="close-btn" onclick="closeModal('addModalOverlay')">&times;</button>
+            <h2 style="color: var(--primary); margin-bottom: 1rem;">Add Your Own Recipe</h2>
+            <form id="addRecipeForm" onsubmit="saveCustomRecipe(event)">
+                <div class="form-group">
+                    <label>Recipe Title</label>
+                    <input type="text" id="customTitle" required placeholder="e.g., Homemade Dal Tadka" />
+                </div>
+                <div class="form-group">
+                    <label>Type / Category</label>
+                    <select id="customType">
+                        <option value="Veg">Vegetarian</option>
+                        <option value="Non-Veg">Non-Vegetarian</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Region</label>
+                    <select id="customRegion">
+                        <option value="North">North Indian</option>
+                        <option value="South">South Indian</option>
+                        <option value="East">East Indian</option>
+                        <option value="West">West Indian</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cooking Time</label>
+                    <input type="text" id="customTime" required placeholder="e.g., 30 mins" />
+                </div>
+                <div class="form-group">
+                    <label>Image URL</label>
+                    <input type="url" id="customImage" required placeholder="https://images.unsplash.com/..." />
+                </div>
+                <div class="form-group">
+                    <label>Ingredients (Separate by line)</label>
+                    <textarea id="customIngredients" rows="4" required
+                        placeholder="1 cup Rice&#10;2 tbsp Ghee&#10;1 tsp Cumin"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Instructions (Separate steps by line)</label>
+                    <textarea id="customSteps" rows="4" required
+                        placeholder="Heat ghee in a pan.&#10;Add cumin seeds.&#10;Mix with rice and cook."></textarea>
+                </div>
+                <button type="submit" class="form-submit-btn">Save Recipe</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initial 60 Indian Recipes Database (30 Veg + 30 Non-Veg)
+        const initialRecipes = [
+            // --- 30 VEGETARIAN RECIPES ---
+            {
+                id: 1, title: "Paneer Butter Masala", category: ["North", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600",
+                ingredients: ["200g Paneer", "2 tbsp Butter", "2 Tomatoes pureed", "1 Onion chopped", "10 Cashews paste", "1 tsp Garam Masala", "2 tbsp Cream"],
+                steps: ["Sauté onions until golden.", "Add tomato puree & spices, cook till oil separates.", "Add cashew paste, paneer cubes, and cream.", "Simmer 5 mins and serve."]
+            },
+            {
+                id: 2, title: "Masala Dosa", category: ["South", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600",
+                ingredients: ["2 cups Dosa batter", "3 Boiled potatoes", "1 Onion sliced", "1/2 tsp Mustard seeds", "Turmeric & Curry leaves"],
+                steps: ["Prepare potato masala with tempered spices and onions.", "Spread dosa batter thinly on hot tawa.", "Add potato filling in center and roll.", "Serve crisp with coconut chutney."]
+            },
+            {
+                id: 3, title: "Chole Bhature", category: ["North", "Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600",
+                ingredients: ["1 cup Soaked Chickpeas", "2 Onions & Tomatoes", "1 tbsp Chole Masala", "1 cup Maida", "Yogurt for dough"],
+                steps: ["Cook chickpeas till tender.", "Make spiced gravy with onions, tomatoes & chole masala.", "Mix chickpeas into gravy.", "Fry rolled dough discs till puffed."]
+            },
+            {
+                id: 4, title: "Dal Makhani", category: ["North", "Veg"], time: "60 mins",
+                image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600",
+                ingredients: ["1 cup Black Lentils (Urad)", "1/4 cup Rajma", "3 tbsp Butter", "2 tbsp Cream", "1 tbsp Ginger Garlic paste", "1 cup Tomato puree"],
+                steps: ["Pressure cook lentils and rajma till soft.", "Prepare butter-tomato masala.", "Slow cook lentils with tomato puree for 40 mins.", "Finish with butter and heavy cream."]
+            },
+            {
+                id: 5, title: "Aloo Gobi", category: ["North", "Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["1 Cauliflower cut into florets", "2 Potatoes cubed", "1 tsp Cumin", "1 tsp Turmeric", "1 tsp Chili powder"],
+                steps: ["Fry potato and cauliflower florets till half cooked.", "Heat oil, add cumin seeds and spices.", "Toss vegetables and cook covered on low heat till tender."]
+            },
+            {
+                id: 6, title: "Palak Paneer", category: ["North", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=600",
+                ingredients: ["200g Paneer", "2 bunches Spinach (blanched)", "1 Onion", "1 tbsp Garlic minced", "1/2 tsp Garam Masala"],
+                steps: ["Puree blanched spinach.", "Sauté garlic and onions.", "Add spinach puree, cooked spices, and paneer cubes.", "Simmer for 5 minutes."]
+            },
+            {
+                id: 7, title: "Pav Bhaji", category: ["West", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600",
+                ingredients: ["Boiled mixed veggies (Potato, Peas, Capsicum)", "2 tbsp Pav Bhaji Masala", "3 tbsp Butter", "Pav buns"],
+                steps: ["Mash all boiled vegetables thoroughly.", "Cook with butter, onions, tomatoes, and Pav Bhaji Masala.", "Toast pav buns with butter.", "Serve hot with lemon and onions."]
+            },
+            {
+                id: 8, title: "Sambar", category: ["South", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["1/2 cup Toor Dal", "Mixed veggies (Drumstick, Pumpkin)", "2 tbsp Sambar powder", "Tamarind pulp", "Mustard seeds & Curry leaves"],
+                steps: ["Cook dal till soft.", "Boil vegetables in tamarind water.", "Mix cooked dal, sambar powder, and temper with mustard seeds and curry leaves."]
+            },
+            {
+                id: 9, title: "Vegetable Biryani", category: ["South", "Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["1.5 cups Basmati Rice", "Mixed Veggies", "1/2 cup Yogurt", "Biryani Spices", "Mint & Fried Onions"],
+                steps: ["Parboil rice with whole spices.", "Sauté veggies in yogurt and biryani masala.", "Layer rice and veggies, top with mint and fried onions.", "Cook on dum for 15 mins."]
+            },
+            {
+                id: 10, title: "Rajma Chawal", category: ["North", "Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600",
+                ingredients: ["1 cup Red Kidney Beans", "2 Onions finely chopped", "2 Tomato puree", "1 tbsp Rajma Masala", "Cooked Basmati Rice"],
+                steps: ["Pressure cook soaked kidney beans.", "Make onion-tomato gravy with rajma masala.", "Add kidney beans and simmer for 15 mins.", "Serve hot over steamed basmati rice."]
+            },
+            {
+                id: 11, title: "Malai Kofta", category: ["North", "Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600",
+                ingredients: ["2 Boiled Potatoes", "100g Paneer", "Cornflour", "Cashew Tomato Rich Gravy", "Cream"],
+                steps: ["Mash potato & paneer, form balls, roll in cornflour and deep fry.", "Prepare smooth cashew-tomato gravy.", "Pour warm gravy over koftas before serving."]
+            },
+            {
+                id: 12, title: "Idli Sambar", category: ["South", "Veg"], time: "20 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["Fermented Idli Batter", "Hot Sambar", "Coconut Chutney"],
+                steps: ["Grease idli molds and pour batter.", "Steam for 10-12 minutes.", "Serve piping hot with sambar and coconut chutney."]
+            },
+            {
+                id: 13, title: "Dhokla", category: ["West", "Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600",
+                ingredients: ["1 cup Gram Flour (Besan)", "1 tbsp Eno Fruit Salt", "Green Chili", "Mustard seeds & Curry leaves"],
+                steps: ["Make smooth batter of besan, water, turmeric, and lemon juice.", "Add Eno and steam in greased pan for 15 mins.", "Temper mustard seeds & chillies and pour over steamed dhokla."]
+            },
+            {
+                id: 14, title: "Baingan Bharta", category: ["North", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["1 Large Eggplant (Roasted)", "1 Onion chopped", "2 Tomatoes chopped", "Garlic & Green Chillies"],
+                steps: ["Roast eggplant over open flame, peel skin and mash.", "Sauté onions, garlic, chillies, and tomatoes.", "Add mashed eggplant and spices. Cook 10 minutes."]
+            },
+            {
+                id: 15, title: "Mutter Paneer", category: ["North", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600",
+                ingredients: ["200g Paneer", "1 cup Green Peas", "Onion-Tomato Paste", "Garam Masala"],
+                steps: ["Sauté onion tomato paste till oil releases.", "Add green peas and 1 cup water, cook till tender.", "Add paneer cubes and garam masala, simmer 5 mins."]
+            },
+            {
+                id: 16, title: "Kadhi Pakora", category: ["North", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600",
+                ingredients: ["1 cup Sour Yogurt", "1/2 cup Besan", "Onion fritters (Pakoras)", "Mustard & Cumin seeds"],
+                steps: ["Whisk yogurt and besan with 3 cups water.", "Boil mixture while stirring continuously for 20 mins.", "Add fried besan pakoras and temper with spices in ghee."]
+            },
+            {
+                id: 17, title: "Vada Pav", category: ["West", "Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600",
+                ingredients: ["Boiled spicy potato balls", "Besan batter", "Pav Buns", "Garlic Chutney"],
+                steps: ["Dip spicy potato balls in besan batter and deep fry.", "Slice pav, spread garlic chutney, place potato vada inside.", "Serve with fried green chili."]
+            },
+            {
+                id: 18, title: "Medu Vada", category: ["South", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600",
+                ingredients: ["1 cup Soaked Urad Dal", "Crushed Black Pepper", "Curry Leaves", "Chopped Onions"],
+                steps: ["Grind soaked urad dal to thick fluffy batter.", "Mix pepper, curry leaves, onions.", "Shape into donuts and deep-fry until golden brown."]
+            },
+            {
+                id: 19, title: "Aloo Paratha", category: ["North", "Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600",
+                ingredients: ["Wheat Flour Dough", "Boiled Mashed Potatoes", "Green Chili, Coriander, Amchur"],
+                steps: ["Mix mashed potatoes with spices.", "Stuff potato filling into dough ball.", "Roll flat and cook on tawa with generous butter or ghee."]
+            },
+            {
+                id: 20, title: "Bisi Bele Bath", category: ["South", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["Rice", "Toor Dal", "Mixed Veggies", "Bisi Bele Bath Masala", "Tamarind & Ghee"],
+                steps: ["Pressure cook rice, dal, and veggies together.", "Mix tamarind juice and spice powder.", "Combine all ingredients with ghee and cashew tempering."]
+            },
+            {
+                id: 21, title: "Veg Kolhapuri", category: ["West", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["Mixed Veggies", "Desiccated Coconut", "Dry Red Chillies", "Kolhapuri Masala"],
+                steps: ["Roast coconut and red chillies to make a spicy paste.", "Cook mixed vegetables.", "Simmer veggies in spicy coconut masala paste."]
+            },
+            {
+                id: 22, title: "Misal Pav", category: ["West", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600",
+                ingredients: ["Sprouted Moth Beans", "Spicy Kat/Rassa (Gravy)", "Farsan/Farsan Mix", "Pav"],
+                steps: ["Cook sprouted moth beans.", "Prepare spicy red gravy (Kat).", "Top sprouts with farsan, chopped onions, and hot rassa. Serve with pav."]
+            },
+            {
+                id: 23, title: "Aloo Posto", category: ["East", "Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["3 Potatoes diced", "3 tbsp Poppy Seeds (Posto) paste", "Mustard Oil", "Green Chillies"],
+                steps: ["Sauté potatoes in mustard oil.", "Add poppy seed paste and green chillies.", "Cook on low heat till potatoes are soft and coated in paste."]
+            },
+            {
+                id: 24, title: "Shahi Paneer", category: ["North", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600",
+                ingredients: ["200g Paneer", "Cashew & Almond paste", "Cream", "Saffron water", "Whole Spices"],
+                steps: ["Sauté whole spices in ghee.", "Add cashew paste, cream, and saffron.", "Add paneer cubes and simmer gently for 5 minutes."]
+            },
+            {
+                id: 25, title: "Kashmiri Dum Aloo", category: ["North", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600",
+                ingredients: ["Baby Potatoes (Fried)", "Fennel Powder", "Dry Ginger Powder", "Whisked Yogurt"],
+                steps: ["Deep fry pricked baby potatoes.", "Whisk yogurt with fennel and ginger powder.", "Cook potatoes in yogurt gravy on low heat (dum) till tender."]
+            },
+            {
+                id: 26, title: "Ven Pongal", category: ["South", "Veg"], time: "20 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["1 cup Raw Rice", "1/2 cup Moong Dal", "Ghee", "Black Pepper", "Cumin seeds", "Cashews"],
+                steps: ["Pressure cook rice and moong dal till soft.", "Temper black pepper, cumin, ginger, and cashews in generous ghee.", "Mix tempering into pongal."]
+            },
+            {
+                id: 27, title: "Gobi Manchurian", category: ["East", "Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600",
+                ingredients: ["Cauliflower florets", "Cornflour batter", "Soy Sauce", "Chili Sauce", "Spring Onions"],
+                steps: ["Coat cauliflower in cornflour batter and crisp fry.", "Sauté garlic, chillies, soy sauce, and chili sauce.", "Toss fried florets in sauce."]
+            },
+            {
+                id: 28, title: "Navratan Korma", category: ["North", "Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600",
+                ingredients: ["Mixed Vegetables & Nuts", "Paneer", "Cream & Cashew Gravy", "Pineapple pieces"],
+                steps: ["Prepare mild and sweet nut-based creamy gravy.", "Add cooked veggies, paneer, and fruits.", "Garnish with fried cashews and raisins."]
+            },
+            {
+                id: 29, title: "Lemon Rice", category: ["South", "Veg"], time: "15 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["2 cups Cooked Rice", "Lemon Juice", "Mustard seeds, Peanuts, Currying leaves", "Turmeric"],
+                steps: ["Temper mustard seeds, peanuts, curry leaves, and turmeric in oil.", "Mix in cooked rice.", "Turn off heat and stir in fresh lemon juice."]
+            },
+            {
+                id: 30, title: "Litti Chokha", category: ["East", "Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600",
+                ingredients: ["Wheat dough balls", "Sattu (Roasted gram flour) filling", "Roasted Eggplant & Tomato mash"],
+                steps: ["Stuff sattu with spices inside dough balls.", "Bake or roast littis over charcoal/oven.", "Dip in melted ghee and serve with mashed roasted eggplant/tomato (Chokha)."]
+            },
+
+            // --- 30 NON-VEGETARIAN RECIPES ---
+            {
+                id: 31, title: "Butter Chicken", category: ["North", "Non-Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken", "Yogurt marinade", "3 tbsp Butter", "Tomato puree", "Cream & Kasuri Methi"],
+                steps: ["Marinate and sear chicken pieces.", "Make rich tomato gravy with cashews and butter.", "Combine chicken into gravy and finish with cream."]
+            },
+            {
+                id: 32, title: "Hyderabadi Chicken Biryani", category: ["South", "Non-Veg"], time: "60 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["500g Chicken", "2 cups Basmati Rice", "Yogurt & Biryani Spices", "Fried Onions (Birista)", "Mint & Saffron"],
+                steps: ["Marinate chicken in spiced yogurt for 1 hour.", "Layer semi-cooked rice over raw marinated chicken.", "Seal pot and steam on low heat (Dum) for 30 minutes."]
+            },
+            {
+                id: 33, title: "Mutton Rogan Josh", category: ["North", "Non-Veg"], time: "60 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["500g Mutton", "Kashmiri Red Chili", "Fennel seed powder", "Garlic & Mustard oil", "Yogurt"],
+                steps: ["Brown mutton in hot mustard oil.", "Add Kashmiri chili powder, ginger, and fennel powder.", "Add yogurt and slow cook until mutton is melt-in-mouth tender."]
+            },
+            {
+                id: 34, title: "Goan Fish Curry", category: ["West", "Non-Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["4 Fish Fillets (Kingfish/Pomfret)", "Coconut Milk", "Kokum or Tamarind", "Goan Spice paste"],
+                steps: ["Grind coconut, red chillies, and spices into fine paste.", "Simmer paste with tamarind/kokum water.", "Gently place fish fillets into gravy and cook for 7-10 minutes."]
+            },
+            {
+                id: 35, title: "Chicken Tikka Masala", category: ["North", "Non-Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken Tikka chunks", "Onion Tomato Gravy", "Garlic & Ginger", "Garam Masala"],
+                steps: ["Grill marinated chicken tikka pieces.", "Prepare thick onion-tomato gravy with aromatic spices.", "Toss grilled chicken in gravy and simmer."]
+            },
+            {
+                id: 36, title: "Chettinad Chicken", category: ["South", "Non-Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600",
+                ingredients: ["500g Chicken", "Freshly roasted Chettinad Masala (Poppy seeds, Fennel, Star Anise)", "Curry leaves", "Shallots"],
+                steps: ["Dry roast whole spices and coconut, then grind into paste.", "Sauté shallots and curry leaves.", "Add chicken and roasted spice paste; cook till chicken is tender."]
+            },
+            {
+                id: 37, title: "Fish Amritsari", category: ["North", "Non-Veg"], time: "20 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["400g White Fish fillets", "Gram flour (Besan)", "Ajwain (Carom seeds)", "Lemon juice & Chili powder"],
+                steps: ["Marinate fish with lemon juice, ajwain, and spices.", "Coat fish in besan batter.", "Deep fry until golden and crispy."]
+            },
+            {
+                id: 38, title: "Bengali Shorshe Ilish", category: ["East", "Non-Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["4 Hilsa Fish steaks", "Mustard Seed Paste", "Green Chillies", "Mustard Oil", "Turmeric"],
+                steps: ["Mix mustard seed paste with turmeric, salt, and green chillies.", "Coat fish steaks in paste.", "Cook covered in mustard oil till fish is delicate and tender."]
+            },
+            {
+                id: 39, title: "Egg Curry", category: ["North", "Non-Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["4 Boiled Eggs", "2 Onions finely chopped", "2 Tomatoes pureed", "Ginger Garlic Paste", "Spices"],
+                steps: ["Prick and shallow fry boiled eggs till skin is golden.", "Make gravy with onions, tomatoes, and spices.", "Add eggs and simmer for 8 minutes."]
+            },
+            {
+                id: 40, title: "Chicken Korma", category: ["North", "Non-Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken", "1/2 cup Yogurt", "Almond/Cashew Paste", "Fried Onions", "Kewra water"],
+                steps: ["Blend fried onions with yogurt into a smooth paste.", "Cook chicken with whole spices and onion-yogurt mix.", "Add nut paste and cook until oil floats on top."]
+            },
+            {
+                id: 41, title: "Prawn Ghee Roast", category: ["South", "Non-Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["300g Prawns", "3 tbsp Pure Ghee", "Byadgi Chili Spice Paste", "Tamarind paste"],
+                steps: ["Roast dry red chillies and spices; grind with tamarind.", "Sauté prawns in ghee.", "Add spice paste and roast in ghee until thick and dark red."]
+            },
+            {
+                id: 42, title: "Mutton Keema", category: ["North", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["400g Minced Mutton (Keema)", "Green Peas", "1 Onion chopped", "Garlic, Ginger & Mint"],
+                steps: ["Sauté onions, ginger, and garlic.", "Add minced mutton and break up clumps while cooking.", "Add spices and green peas; simmer until oil separates."]
+            },
+            {
+                id: 43, title: "Chicken Sukka", category: ["South", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600",
+                ingredients: ["500g Chicken", "Grated Coconut", "Mangalorean Spice Mix", "Curry leaves & Ghee"],
+                steps: ["Roast dry spices and grated coconut.", "Cook chicken with spices until liquid evaporates.", "Toss with roasted coconut mix until dry."]
+            },
+            {
+                id: 44, title: "Malabar Fish Curry", category: ["South", "Non-Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["Fish steaks", "Coconut Milk", "Kudampuli (Malabar Tamarind)", "Shallots & Fenugreek"],
+                steps: ["Soak kudampuli in water.", "Cook shallots, ginger, chillies, and spices.", "Add coconut milk, fish, and kudampuli. Simmer gently."]
+            },
+            {
+                id: 45, title: "Chicken Saagwala", category: ["North", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken", "2 cups Pureed Spinach", "Garlic & Ginger", "Garam Masala"],
+                steps: ["Sear chicken pieces until half done.", "Prepare garlic-infused spinach gravy.", "Combine chicken and spinach puree; simmer till chicken is cooked."]
+            },
+            {
+                id: 46, title: "Kolkata Chicken Biryani", category: ["East", "Non-Veg"], time: "55 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["Chicken", "Basmati Rice", "Fried Boiled Potatoes", "Boiled Eggs", "Rose water & Meetha Attar"],
+                steps: ["Parboil rice and marinate chicken.", "Fry whole potatoes with turmeric.", "Layer chicken, potatoes, eggs, and aromatic rice. Cook on dum."]
+            },
+            {
+                id: 47, title: "Kerala Mutton Stew", category: ["South", "Non-Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["400g Mutton", "Thick & Thin Coconut Milk", "Potatoes & Carrots", "Green Chillies & Whole Spices"],
+                steps: ["Pressure cook mutton with thin coconut milk and vegetables.", "Add whole spices, curry leaves, and green chillies.", "Finish by stirring in thick coconut milk on low heat."]
+            },
+            {
+                id: 48, title: "Tandoori Chicken", category: ["North", "Non-Veg"], time: "40 mins",
+                image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600",
+                ingredients: ["Whole Chicken legs (scored)", "Hung Curd", "Kashmiri Chili Powder", "Lemon juice & Chaat Masala"],
+                steps: ["Marinate chicken with hung curd, lemon, and spices for 4 hours.", "Bake or grill at high heat until charred at edges.", "Baste with butter and sprinkle chaat masala."]
+            },
+            {
+                id: 49, title: "Prawn Malai Curry", category: ["East", "Non-Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["300g Jumbo Prawns", "1 cup Coconut Milk", "Ghee & Green Cardamoms", "Garam Masala"],
+                steps: ["Lightly sauté prawns in ghee.", "Sauté green cardamoms and ginger paste.", "Pour coconut milk and add prawns. Cook gently for 5 minutes."]
+            },
+            {
+                id: 50, title: "Chicken 65", category: ["South", "Non-Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600",
+                ingredients: ["400g Boneless Chicken cubes", "Cornflour & Curd marinade", "Curry leaves", "Garlic & Red Chili sauce"],
+                steps: ["Marinate chicken in spiced curd and cornflour; deep fry.", "Temper garlic, curry leaves, and chili sauce in pan.", "Toss fried chicken until well coated."]
+            },
+            {
+                id: 51, title: "Mutton Biryani", category: ["South", "Non-Veg"], time: "60 mins",
+                image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600",
+                ingredients: ["500g Mutton", "Basmati Rice", "Yogurt", "Ghee", "Biryani Spices"],
+                steps: ["Cook mutton till 80% tender.", "Parboil fragrant basmati rice.", "Layer mutton gravy with rice and ghee. Cook on slow dum for 25 mins."]
+            },
+            {
+                id: 52, title: "Chicken Cafreal", category: ["West", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken legs", "Coriander, Green Chillies, Garlic & Vinegar Paste", "Whole Spices"],
+                steps: ["Grind fresh coriander, chillies, garlic, and vinegar into green paste.", "Marinate chicken overnight.", "Pan-fry chicken in oil till cooked and crisp."]
+            },
+            {
+                id: 53, title: "Fish Fry (South Indian)", category: ["South", "Non-Veg"], time: "20 mins",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600",
+                ingredients: ["Fish Slices", "Red Chili Powder", "Turmeric & Rice Flour", "Lemon Juice"],
+                steps: ["Mix red chili, turmeric, salt, lemon juice, and rice flour into paste.", "Coat fish slices with paste.", "Shallow fry on tawa with oil till crispy."]
+            },
+            {
+                id: 54, title: "Laal Maas", category: ["North", "Non-Veg"], time: "50 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["500g Mutton", "Mathania Red Chili Paste", "Yogurt & Ghee", "Garlic"],
+                steps: ["Sauté onions and garlic in ghee.", "Add mutton and Mathania chili paste.", "Slow cook with yogurt until meat turns tender and oil surfaces."]
+            },
+            {
+                id: 55, title: "Chicken Do Pyaza", category: ["North", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=600",
+                ingredients: ["500g Chicken", "2 cups Onions (Half finely chopped, half diced cubes)", "Tomatoes & Spices"],
+                steps: ["Sauté chopped onions till golden.", "Add chicken and spices, cook till tender.", "Toss in large diced onion cubes near the end for texture."]
+            },
+            {
+                id: 56, title: "Egg Roast (Kerala Style)", category: ["South", "Non-Veg"], time: "25 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["4 Hard Boiled Eggs", "3 Sliced Onions", "Fennel Seeds", "Curry leaves & Coconut oil"],
+                steps: ["Slowly caramelized onions in coconut oil with fennel and spices.", "Slit hard-boiled eggs.", "Coat eggs in caramelized onion masala."]
+            },
+            {
+                id: 57, title: "Chicken Kolhapuri", category: ["West", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600",
+                ingredients: ["500g Chicken", "Roasted Coconut & Sesame Seed Paste", "Kolhapuri Red Chili Powder"],
+                steps: ["Roast dry spices, sesame, and coconut.", "Make spicy gravy base.", "Cook chicken in gravy till tender and spicy."]
+            },
+            {
+                id: 58, title: "Nadan Kozhi Curry", category: ["South", "Non-Veg"], time: "35 mins",
+                image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600",
+                ingredients: ["Chicken", "Roasted Coconut Paste", "Shallots", "Coconut oil & Curry leaves"],
+                steps: ["Roast grated coconut to dark brown and grind into smooth paste.", "Cook chicken with shallots and spices.", "Mix coconut paste and simmer."]
+            },
+            {
+                id: 59, title: "Chicken Reshmi Kebab", category: ["North", "Non-Veg"], time: "30 mins",
+                image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600",
+                ingredients: ["400g Boneless Chicken", "Cashew Paste", "Cream & Hung Curd", "Green Chili paste"],
+                steps: ["Marinate chicken with cashew paste, cream, and curd for 2 hours.", "Skewer chicken pieces.", "Grill or bake till tender and lightly charred."]
+            },
+            {
+                id: 60, title: "Mutton Sukka", category: ["South", "Non-Veg"], time: "45 mins",
+                image: "https://images.unsplash.com/photo-1545247181-516773cae754?w=600",
+                ingredients: ["400g Mutton", "Crushed Black Pepper", "Shallots", "Curry Leaves & Ghee"],
+                steps: ["Pressure cook mutton till tender.", "Sauté shallots, curry leaves, and abundant crushed pepper in ghee.", "Add cooked mutton and stir fry until dry."]
+            }
+        ];
+
+        // Initialize LocalStorage if empty
+        function getStoredRecipes() {
+            const stored = localStorage.getItem('mealmap_recipes');
+            if (!stored) {
+                localStorage.setItem('mealmap_recipes', JSON.stringify(initialRecipes));
+                return initialRecipes;
+            }
+            return JSON.parse(stored);
+        }
+
+        let recipes = getStoredRecipes();
+        let currentTimer = null;
+
+        function renderRecipes(items) {
+            const grid = document.getElementById('recipeGrid');
+            if (items.length === 0) {
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No recipes found matching your search criteria.</p>`;
+                return;
+            }
+            grid.innerHTML = items.map(recipe => `
+        <div class="card" onclick="openRecipe(${recipe.id})">
+          <img src="${recipe.image}" alt="${recipe.title}" loading="lazy" />
+          <div class="card-body">
+            <h3>${recipe.title}</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">⏳ ${recipe.time}</p>
+            <div class="tags">
+              ${recipe.category.map(c => `<span class="badge">${c}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        function openRecipe(id) {
+            const recipe = recipes.find(r => r.id === id);
+            const modalBody = document.getElementById('modalBody');
+
+            modalBody.innerHTML = `
+        <h2>${recipe.title}</h2>
+        <img src="${recipe.image}" alt="${recipe.title}" />
+        
+        <h3 class="section-title">Ingredients</h3>
+        <div class="ingredients-list">
+          ${recipe.ingredients.map(i => `<label><input type="checkbox"> ${i}</label>`).join('')}
+        </div>
+
+        <h3 class="section-title">Step-by-Step Instructions</h3>
+        <ol class="steps-list">
+          ${recipe.steps.map(s => `<li>${s}</li>`).join('')}
+        </ol>
+
+        <div class="timer-box">
+          <div>
+            <strong>Kitchen Cooking Timer</strong>
+            <div id="timerDisplay" style="font-size: 1.2rem; font-family: monospace;">05:00</div>
+          </div>
+          <button class="timer-btn" onclick="toggleTimer()">Start 5m Timer</button>
+        </div>
+      `;
+
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+            if (currentTimer) clearInterval(currentTimer);
+        }
+
+        function openAddModal() {
+            document.getElementById('addModalOverlay').style.display = 'flex';
+        }
+
+        function saveCustomRecipe(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('customTitle').value;
+            const type = document.getElementById('customType').value;
+            const region = document.getElementById('customRegion').value;
+            const time = document.getElementById('customTime').value;
+            const image = document.getElementById('customImage').value;
+            const ingredients = document.getElementById('customIngredients').value.split('\n').filter(i => i.trim() !== '');
+            const steps = document.getElementById('customSteps').value.split('\n').filter(s => s.trim() !== '');
+
+            const newRecipe = {
+                id: Date.now(),
+                title,
+                category: [region, type],
+                time,
+                image,
+                ingredients,
+                steps
+            };
+
+            recipes.unshift(newRecipe);
+            localStorage.setItem('mealmap_recipes', JSON.stringify(recipes));
+
+            renderRecipes(recipes);
+            closeModal('addModalOverlay');
+            document.getElementById('addRecipeForm').reset();
+            alert('Your recipe has been saved successfully!');
+        }
+
+        function filterRecipes(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (category === 'all') {
+                renderRecipes(recipes);
+            } else {
+                const filtered = recipes.filter(r => r.category.includes(category));
+                renderRecipes(filtered);
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = recipes.filter(r =>
+                r.title.toLowerCase().includes(query) ||
+                r.ingredients.some(i => i.toLowerCase().includes(query))
+            );
+            renderRecipes(filtered);
+        });
+
+        function toggleTimer() {
+            let seconds = 300;
+            const display = document.getElementById('timerDisplay');
+            if (currentTimer) clearInterval(currentTimer);
+
+            currentTimer = setInterval(() => {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                display.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                if (seconds <= 0) {
+                    clearInterval(currentTimer);
+                    alert('Timer finished!');
+                }
+                seconds--;
+            }, 1000);
+        }
+
+        // Initial load
+        renderRecipes(recipes);
+    </script>
+</body>
+
+</html>
